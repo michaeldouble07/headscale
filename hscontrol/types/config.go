@@ -1238,9 +1238,9 @@ func LoadServerConfig() (*Config, error) {
 	metricsRaw := viper.GetString("metrics_listen_addr")
 	grpcRaw := viper.GetString("grpc_listen_addr")
 
-	listenUnix := viper.GetBool("listen_unix")
-	metricsUnix := viper.GetBool("metrics_unix")
-	grpcUnix := viper.GetBool("grpc_unix")
+	listenAddr, listenUnix := detect(listenRaw, viper.GetBool("listen_unix"))
+	metricsAddr, metricsUnix := detect(metricsRaw, viper.GetBool("metrics_unix"))
+	grpcAddr, grpcUnix := detect(grpcRaw, viper.GetBool("grpc_unix"))
 
 	return &Config{
 		ServerURL:           serverURL,
