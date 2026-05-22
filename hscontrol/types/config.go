@@ -1212,14 +1212,44 @@ func LoadServerConfig() (*Config, error) {
 		}
 	}
 
+	// Auto-detect unix socket configuration when address looks like a filesystem path
+	// or uses the unix: / unix:// prefix. Explicit viper booleans take precedence.
+	detect := func(raw string, explicit bool) (string, bool) {
+		addr := raw
+		unix := explicit
+
+		if !unix {
+			if strings.HasPrefix(addr, "unix://") {
+				unix = true
+				addr = strings.TrimPrefix(addr, "unix://")
+			} else if strings.HasPrefix(addr, "unix:") {
+				unix = true
+				addr = strings.TrimPrefix(addr, "unix:")
+			} else if strings.HasPrefix(addr, "/") {
+				// Treat absolute filesystem paths as unix sockets
+				unix = true
+			}
+		}
+
+		return addr, unix
+	}
+
+	listenRaw := viper.GetString("listen_addr")
+	metricsRaw := viper.GetString("metrics_listen_addr")
+	grpcRaw := viper.GetString("grpc_listen_addr")
+
+	listenAddr, listenUnix := detect(listenRaw, viper.GetBool("listen_unix"))
+	metricsAddr, metricsUnix := detect(metricsRaw, viper.GetBool("metrics_unix"))
+	grpcAddr, grpcUnix := detect(grpcRaw, viper.GetBool("grpc_unix"))
+
 	return &Config{
 		ServerURL:           serverURL,
-		Addr:                viper.GetString("listen_addr"),
-		AddrUnix:            viper.GetBool("listen_unix"),
-		MetricsAddr:         viper.GetString("metrics_listen_addr"),
-		MetricsAddrUnix:     viper.GetBool("metrics_unix"),
-		GRPCAddr:            viper.GetString("grpc_listen_addr"),
-		GRPCUnix:            viper.GetBool("grpc_unix"),
+		Addr:                listenAddr,
+		AddrUnix:            listenUnix,
+		MetricsAddr:         metricsAddr,
+		MetricsAddrUnix:     metricsUnix,
+		GRPCAddr:            grpcAddr,
+		GRPCUnix:            grpcUnix,
 		GRPCAllowInsecure:   viper.GetBool("grpc_allow_insecure"),
 		TrustedProxies:     trusted,
 		DisableUpdateCheck: false,

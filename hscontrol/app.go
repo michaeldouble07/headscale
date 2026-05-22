@@ -861,7 +861,7 @@ func (h *Headscale) Serve() error {
 	if tlsConfig != nil {
 		httpServer.TLSConfig = tlsConfig
 		httpListener, err = tls.Listen("tcp", h.cfg.Addr, tlsConfig)
-	} else if h.cfg.AddrUnix{
+	} else if h.cfg.AddrUnix {
 		socketDir := filepath.Dir(h.cfg.Addr)
 
 		err = util.EnsureDir(socketDir)
