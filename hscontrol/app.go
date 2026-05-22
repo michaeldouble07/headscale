@@ -859,7 +859,6 @@ func (h *Headscale) Serve() error {
 	var httpListener net.Listener
 	
 	if h.cfg.AddrUnix {
-		log.Info().Msgf("Unix is being setup: %s", h.cfg.AddrUnix)
 		socketDir := filepath.Dir(h.cfg.Addr)
 
 		err = util.EnsureDir(socketDir)
