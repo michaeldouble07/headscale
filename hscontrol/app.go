@@ -808,9 +808,25 @@ func (h *Headscale) Serve() error {
 			if err := util.EnsureDir(socketDir); err != nil {
 				return fmt.Errorf("setting up unix socket for gRPC listen: %w", err)
 			}
+
+			// Remove existing socket file if present to avoid address-in-use errors
+			if _, err := os.Stat(h.cfg.GRPCAddr); err == nil {
+				if err := os.Remove(h.cfg.GRPCAddr); err != nil {
+					return fmt.Errorf("removing existing gRPC unix socket: %w", err)
+				}
+			}
+
 			grpcListener, err = new(net.ListenConfig).Listen(context.Background(), "unix", h.cfg.GRPCAddr)
+			if err != nil {
+				return fmt.Errorf("binding to gRPC unix socket: %w", err)
+			}
+
+			// Ensure socket has the configured permissions
+			if err := os.Chmod(h.cfg.GRPCAddr, h.cfg.UnixSocketPermission); err != nil {
+				return fmt.Errorf("setting gRPC unix socket permissions: %w", err)
+			}
 		} else {
-		grpcListener, err = new(net.ListenConfig).Listen(context.Background(), "tcp", h.cfg.GRPCAddr)
+			grpcListener, err = new(net.ListenConfig).Listen(context.Background(), "tcp", h.cfg.GRPCAddr)
 		}
 		if err != nil {
 			return fmt.Errorf("binding to TCP address: %w", err)
@@ -852,7 +868,23 @@ func (h *Headscale) Serve() error {
 		if err != nil {
 			return fmt.Errorf("setting up unix socket for listen: %w", err)
 		}
+
+		// Remove existing socket file if present to avoid address-in-use errors
+		if _, err := os.Stat(h.cfg.Addr); err == nil {
+			if err := os.Remove(h.cfg.Addr); err != nil {
+				return fmt.Errorf("removing existing http unix socket: %w", err)
+			}
+		}
+
 		httpListener, err = new(net.ListenConfig).Listen(context.Background(), "unix", h.cfg.Addr)
+		if err != nil {
+			return fmt.Errorf("binding to http unix socket: %w", err)
+		}
+
+		// Apply configured permissions to the socket file
+		if err := os.Chmod(h.cfg.Addr, h.cfg.UnixSocketPermission); err != nil {
+			return fmt.Errorf("setting http unix socket permissions: %w", err)
+		}
 	} else {
 		httpListener, err = new(net.ListenConfig).Listen(context.Background(), "tcp", h.cfg.Addr)
 	}
@@ -880,7 +912,21 @@ func (h *Headscale) Serve() error {
 				return fmt.Errorf("setting up unix socket for metrics listen: %w", err)
 			}
 
+			// Remove existing socket file if present to avoid address-in-use errors
+			if _, err := os.Stat(h.cfg.MetricsAddr); err == nil {
+				if err := os.Remove(h.cfg.MetricsAddr); err != nil {
+					return fmt.Errorf("removing existing metrics unix socket: %w", err)
+				}
+			}
+
 			debugHTTPListener, err = (&net.ListenConfig{}).Listen(ctx, "unix", h.cfg.MetricsAddr)
+			if err != nil {
+				return fmt.Errorf("binding to metrics unix socket: %w", err)
+			}
+
+			if err := os.Chmod(h.cfg.MetricsAddr, h.cfg.UnixSocketPermission); err != nil {
+				return fmt.Errorf("setting metrics unix socket permissions: %w", err)
+			}
 		} else {
 		debugHTTPListener, err = (&net.ListenConfig{}).Listen(ctx, "tcp", h.cfg.MetricsAddr)
 		}

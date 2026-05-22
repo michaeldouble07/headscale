@@ -96,8 +96,11 @@ type NodeConfig struct {
 type Config struct {
 	ServerURL           string
 	Addr                string
+	AddrUnix            bool
 	MetricsAddr         string
+	MetricsAddrUnix     bool
 	GRPCAddr            string
+	GRPCUnix            bool
 	GRPCAllowInsecure   bool
 	TrustedProxies      []netip.Prefix
 	Node                NodeConfig
@@ -416,11 +419,10 @@ func LoadConfig(path string, isFile bool) error {
 
 	viper.SetDefault("unix_socket", "/var/run/headscale/headscale.sock")
 	viper.SetDefault("unix_socket_permission", "0o770")
-
 	viper.SetDefault("listen_unix", false)
 	viper.SetDefault("metrics_unix", false)
-	viper.SetDefault("grpc_listen_addr", ":50443")
 	viper.SetDefault("grpc_unix", false)
+	viper.SetDefault("grpc_listen_addr", ":50443")
 	viper.SetDefault("grpc_allow_insecure", false)
 	
 
@@ -1211,14 +1213,14 @@ func LoadServerConfig() (*Config, error) {
 	}
 
 	return &Config{
-		ServerURL:          serverURL,
-		Addr:               viper.GetString("listen_addr"),
-		AddrUnix:           viper.GetBool("listen_unix"),
-		MetricsAddr:        viper.GetString("metrics_listen_addr"),
-		MetricsUnix:        viper.GetBool("metrics_unix"),
-		GRPCAddr:           viper.GetString("grpc_listen_addr"),
-		GRPCUnix:           viper.GetBool("grpc_unix"),
-		GRPCAllowInsecure:  viper.GetBool("grpc_allow_insecure"),
+		ServerURL:           serverURL,
+		Addr:                viper.GetString("listen_addr"),
+		AddrUnix:            viper.GetBool("listen_unix"),
+		MetricsAddr:         viper.GetString("metrics_listen_addr"),
+		MetricsAddrUnix:     viper.GetBool("metrics_unix"),
+		GRPCAddr:            viper.GetString("grpc_listen_addr"),
+		GRPCUnix:            viper.GetBool("grpc_unix"),
+		GRPCAllowInsecure:   viper.GetBool("grpc_allow_insecure"),
 		TrustedProxies:     trusted,
 		DisableUpdateCheck: false,
 
