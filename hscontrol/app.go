@@ -857,11 +857,9 @@ func (h *Headscale) Serve() error {
 	}
 
 	var httpListener net.Listener
-
-	if tlsConfig != nil {
-		httpServer.TLSConfig = tlsConfig
-		httpListener, err = tls.Listen("tcp", h.cfg.Addr, tlsConfig)
-	} else if h.cfg.AddrUnix {
+	
+	if h.cfg.AddrUnix {
+		Msgf("Unix is being setup: %s", h.cfg.AddrUnix)
 		socketDir := filepath.Dir(h.cfg.Addr)
 
 		err = util.EnsureDir(socketDir)
@@ -885,7 +883,10 @@ func (h *Headscale) Serve() error {
 		if err := os.Chmod(h.cfg.Addr, h.cfg.UnixSocketPermission); err != nil {
 			return fmt.Errorf("setting http unix socket permissions: %w", err)
 		}
-	} else {
+	}else if tlsConfig != nil {
+		httpServer.TLSConfig = tlsConfig
+		httpListener, err = tls.Listen("tcp", h.cfg.Addr, tlsConfig)
+	}  else {
 		httpListener, err = new(net.ListenConfig).Listen(context.Background(), "tcp", h.cfg.Addr)
 	}
 
