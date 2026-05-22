@@ -803,7 +803,15 @@ func (h *Headscale) Serve() error {
 
 		v1.RegisterHeadscaleServiceServer(grpcServer, newHeadscaleV1APIServer(h))
 
+		if h.cfg.GRPCUnix {
+			socketDir := filepath.Dir(h.cfg.GRPCAddr)
+			if err := util.EnsureDir(socketDir); err != nil {
+				return fmt.Errorf("setting up unix socket for gRPC listen: %w", err)
+			}
+			grpcListener, err = new(net.ListenConfig).Listen(context.Background(), "unix", h.cfg.GRPCAddr)
+		} else {
 		grpcListener, err = new(net.ListenConfig).Listen(context.Background(), "tcp", h.cfg.GRPCAddr)
+		}
 		if err != nil {
 			return fmt.Errorf("binding to TCP address: %w", err)
 		}
@@ -837,6 +845,14 @@ func (h *Headscale) Serve() error {
 	if tlsConfig != nil {
 		httpServer.TLSConfig = tlsConfig
 		httpListener, err = tls.Listen("tcp", h.cfg.Addr, tlsConfig)
+	} else if h.cfg.AddrUnix{
+		socketDir := filepath.Dir(h.cfg.Addr)
+
+		err = util.EnsureDir(socketDir)
+		if err != nil {
+			return fmt.Errorf("setting up unix socket for listen: %w", err)
+		}
+		httpListener, err = new(net.ListenConfig).Listen(context.Background(), "unix", h.cfg.Addr)
 	} else {
 		httpListener, err = new(net.ListenConfig).Listen(context.Background(), "tcp", h.cfg.Addr)
 	}
@@ -856,10 +872,22 @@ func (h *Headscale) Serve() error {
 	var debugHTTPListener net.Listener
 
 	if h.cfg.MetricsAddr != "" {
+		if h.cfg.MetricsAddrUnix {
+			socketDir := filepath.Dir(h.cfg.MetricsAddr)
+
+			err = util.EnsureDir(socketDir)
+			if err != nil {
+				return fmt.Errorf("setting up unix socket for metrics listen: %w", err)
+			}
+
+			debugHTTPListener, err = (&net.ListenConfig{}).Listen(ctx, "unix", h.cfg.MetricsAddr)
+		} else {
 		debugHTTPListener, err = (&net.ListenConfig{}).Listen(ctx, "tcp", h.cfg.MetricsAddr)
+		}
 		if err != nil {
 			return fmt.Errorf("binding to TCP address: %w", err)
 		}
+
 
 		debugHTTPServer = h.debugHTTPServer()
 

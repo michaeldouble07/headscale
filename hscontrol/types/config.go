@@ -417,8 +417,13 @@ func LoadConfig(path string, isFile bool) error {
 	viper.SetDefault("unix_socket", "/var/run/headscale/headscale.sock")
 	viper.SetDefault("unix_socket_permission", "0o770")
 
+	viper.SetDefault("listen_unix", false)
+	viper.SetDefault("metrics_unix", false)
 	viper.SetDefault("grpc_listen_addr", ":50443")
+	viper.SetDefault("grpc_unix", false)
 	viper.SetDefault("grpc_allow_insecure", false)
+	
+
 
 	viper.SetDefault("cli.timeout", "5s")
 	viper.SetDefault("cli.insecure", false)
@@ -581,7 +586,8 @@ func validateServerConfig() error {
 		errorText += "Fatal config error: headscale now requires a new `noise.private_key_path` field in the config file for the Tailscale v2 protocol\n"
 	}
 
-	if (viper.GetString("tls_letsencrypt_hostname") != "") &&
+	if ((!viper.GetBool("listen_unix")) &&
+		viper.GetString("tls_letsencrypt_hostname") != "") &&
 		(viper.GetString("tls_letsencrypt_challenge_type") == TLSALPN01ChallengeType) &&
 		(!strings.HasSuffix(viper.GetString("listen_addr"), ":443")) {
 		// this is only a warning because there could be something sitting in front of headscale that redirects the traffic (e.g. an iptables rule)
@@ -1207,8 +1213,11 @@ func LoadServerConfig() (*Config, error) {
 	return &Config{
 		ServerURL:          serverURL,
 		Addr:               viper.GetString("listen_addr"),
+		AddrUnix:           viper.GetBool("listen_unix"),
 		MetricsAddr:        viper.GetString("metrics_listen_addr"),
+		MetricsUnix:        viper.GetBool("metrics_unix"),
 		GRPCAddr:           viper.GetString("grpc_listen_addr"),
+		GRPCUnix:           viper.GetBool("grpc_unix"),
 		GRPCAllowInsecure:  viper.GetBool("grpc_allow_insecure"),
 		TrustedProxies:     trusted,
 		DisableUpdateCheck: false,
