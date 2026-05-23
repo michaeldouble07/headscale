@@ -522,6 +522,9 @@ func New(
 			}
 		}
 	case "unstable":
+		// ghcr.io/tailscale/tailscale:unstable is stale (last updated
+		// 2022); only tailscale/tailscale on Docker Hub publishes
+		// current unstable builds.
 		tailscaleOptions.Repository = "tailscale/tailscale"
 		tailscaleOptions.Tag = version
 
@@ -542,7 +545,7 @@ func New(
 			log.Printf("Docker run failed for %s (unstable), error: %v", hostname, err)
 		}
 	default:
-		tailscaleOptions.Repository = "tailscale/tailscale"
+		tailscaleOptions.Repository = "ghcr.io/tailscale/tailscale"
 		tailscaleOptions.Tag = "v" + version
 
 		err = dockertestutil.PullWithAuth(pool, tailscaleOptions.Repository+":"+tailscaleOptions.Tag)
